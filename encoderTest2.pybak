@@ -1,0 +1,72 @@
+import gaugette.rotary_encoder
+import gaugette.switch
+import Tkinter as tk
+from Tkinter import *
+from PIL import Image, ImageTk as itk
+
+class sousVide:
+	def __init__(self2):
+		print "made it this far1"
+		self2.root = tk.Tk()
+		
+		self2.A_PIN1  = 5
+		self2.B_PIN1  = 4
+		self2.SW_PIN1 = 6
+		self2.A_PIN2	= 2
+		self2.B_PIN2	= 3
+		self2.SW_PIN2 = 15
+		 
+		self2.encoder1 = gaugette.rotary_encoder.RotaryEncoder.Worker(self2.A_PIN1, self2.B_PIN1)
+		self2.encoder1.start()
+		self2.switch1 = gaugette.switch.Switch(self2.SW_PIN1)
+		self2.encoder2 = gaugette.rotary_encoder.RotaryEncoder.Worker(self2.A_PIN2, self2.B_PIN2)
+		self2.encoder2.start()
+		self2.switch2 = gaugette.switch.Switch(self2.SW_PIN2)
+		self2.last_state1 = None
+		self2.last_state2 = None
+		
+		self2.timer = 0
+		self2.timerLabel = tk.Label(text='Timer - ' + str(self2.timer/60) + ':' + str(self2.timer%60))
+		self2.timerLabel.pack()
+		self2.temperature = 72.0
+		self2.temperatureLabel = tk.Label(text='Temperature - ' + str(self2.temperature))
+		self2.temperatureLabel.pack()
+		self2.photoMin = itk.PhotoImage(Image.open("temp_minute.png"))
+		self2.photoMinLabel = tk.Label(self2.root, image=self2.photoMin)
+		self2.photoMinLabel.image = self2.photoMin
+		self2.photoMinLabel.pack()
+		self2.photo15Min = itk.PhotoImage(Image.open("temp_15minute.png"))
+		self2.photo15MinLabel = tk.Label(self2.root, image=self2.photo15Min)
+		self2.photo15MinLabel.image = self2.photo15Min
+		self2.photo15MinLabel.pack()
+		task(self2)
+		print "made it this far2"
+		self2.root.mainloop()
+ 
+def task(self2):
+	self2.delta1 = self2.encoder1.get_delta()
+	if self2.delta1!=0:
+		print "rotate1 %d" % self2.delta1
+		self2.timer = self2.timer + self2.delta1*15
+		if self2.timer<0:
+			self2.timer = 0
+		self2.timerLabel.configure(text='Timer - ' + str(self2.timer/60) + ':' + str(self2.timer%60))
+	self2.delta2 = self2.encoder2.get_delta()
+	if self2.delta2!=0:
+		print "rotate2 %d" % self2.delta2
+		self2.temperature = self2.temperature + float(self2.delta2)/4
+		self2.temperatureLabel.configure(text="Temperature - " + str(self2.temperature))
+	self2.sw_state1 = self2.switch1.get_state()
+	if self2.sw_state1 != self2.last_state1:
+		print "switch1 %d" % self2.sw_state1
+		self2.last_state1 = self2.sw_state1
+		self2.timer = 0
+		self2.timerLabel.configure(text='Timer - ' + str(self2.timer/60) + ':' + str(self2.timer%60))
+	self2.sw_state2 = self2.switch2.get_state()
+	if self2.sw_state2 != self2.last_state2:
+		print "switch2 %d" % self2.sw_state2
+		self2.last_state2 = self2.sw_state2
+		self2.temperature = 72
+		self2.temperatureLabel.configure(text="Temperature - " + str(self2.temperature))
+	self2.root.after(1, task, self2)
+mySousVide = sousVide()
